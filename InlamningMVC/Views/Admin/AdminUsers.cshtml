@@ -1,0 +1,179 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    //Alla ändringar ska loggas
+    int currentPage;
+    if (ViewData["currentPage"] != null)
+        currentPage = (int)ViewData["currentPage"];
+    else
+        currentPage = 1;
+
+    int usersPerPage;
+    if (ViewData["usersPerPage"] != null)
+        usersPerPage = (int)ViewData["usersPerPage"];
+    else
+        usersPerPage = 10;
+
+
+    List<ApplicationUser> userList = UserManager.Users.Skip((currentPage - 1) * usersPerPage).Take(usersPerPage).ToList();
+    var userPages = Math.Ceiling((decimal)((float)UserManager.Users.Count() / (float)usersPerPage));
+}
+
+<h2 class="text-center">Users</h2>
+
+<div class="usersAdminList">
+    @foreach (var user in userList)
+    {
+        <div data-userId="@user.Id" class="userInUsersAdminList">
+
+            <p class="userEmail">@user.Email</p>
+
+            <p class="userRole">@UserManager.GetRolesAsync(user).Result[0]</p>
+
+            <p class="userNames">@user.FirstName</p>
+            <p class="userNames">@user.LastName</p>
+            <div class="userRoleSelect">
+                <select class="roleSelect" onchange="changeRole($(this).parent().parent().find('.userEmail').html(), $(this).val())">
+                </select>
+            </div>
+
+            <p onclick='userDeletionConfirm($(this).parent().attr("data-userId"))' class="userDelete">DELETE</p>
+        </div>
+
+    }
+    
+</div>
+
+<div class="mt-1 d-flex">
+    <label>Users per page</label>
+    <input id="userAmountPerPage" type="number" min="1" value="@usersPerPage" />
+    <div class="refreshButton" onclick="updateAmountPerPage()">Refresh</div>
+</div>
+<div class="pageNav">
+
+    @if (currentPage - 1 > 0)
+    {
+        <div id="prevPage" class="pageNumber" onclick="updateUsers(-1);"><p>@("<")</p></div>
+    }
+    @if (currentPage != 1 && userPages >= currentPage + 1)
+    {
+        <div id="page1" class="pageNumber">@(currentPage - 1)</div>
+    }
+    @if (userPages > currentPage + 1)
+    {
+        <div id="page2" class="pageNumber">@(currentPage + 1)</div>
+
+    }
+    @if (userPages >= currentPage + 1)
+    {
+        <div id="page3" class="pageNumber">@(userPages)</div>
+        <div id="nextPage" class="pageNumber" onclick="updateUsers(1);"><p>@(">")</p></div>
+
+    }
+    <div id="generateUsers">
+        <input type="number" id="usersToGenerate" />
+        <div id="generateUsersBtn" onclick="generateUsers()">Generate</div>
+    </div>
+
+</div>
+
+
+
+<script>
+
+    $("#page1,#page2,#page3").each(function () {
+        $(this).click(function () {
+            if (parseInt($(this).html()) != NaN) {
+                gotoPage($(this).html());
+            }
+        });
+    })
+    function changeRole(email, role) {
+
+        var role = $("#roleSelect").val();
+
+        while (adminView.firstChild) {
+            adminView.removeChild(adminView.firstChild);
+        }
+
+        $("#adminView").load('@Url.Action("ChangeRole", "Admin")', { userEmail: email, role: role });
+
+    }
+
+    $(".userInUsersAdminList").each(function () {
+        var role = $(this).find('.userRole').html();
+        
+        var selectedText = "";
+        if (role == "Admin") {
+            selectedText = "selected";
+        } else {
+            selectedText = "";
+        }
+
+        $(this).find('.userRoleSelect').find(".roleSelect").append('<option ' + selectedText + ' value="Admin">Admin</option>');
+
+
+        if (role == "User") {
+            selectedText = "selected";
+        } else {
+            selectedText = "";
+        }
+        
+        $(this).find('.userRoleSelect').find(".roleSelect").append('<option ' + selectedText + ' value="User">User</option>');
+        })
+
+    function generateUsers() {
+        var amountOfUsers = parseInt($("#usersToGenerate").val());
+        var adminView = document.getElementById("adminView");
+        while (adminView.firstChild) {
+            adminView.removeChild(adminView.firstChild);
+        }
+
+        $("#adminView").load('@Url.Action("GenerateUsers", "Admin")', { amount: amountOfUsers });
+    }
+
+    function userDeletionConfirm(userId) {
+        $("#adminView").load('@Url.Action("UserDeletionConfirm", "Admin")', { userId: userId });
+    }
+
+    function deleteUser(userId) {
+        var adminView = document.getElementById("adminView");
+        while (adminView.firstChild) {
+            adminView.removeChild(adminView.firstChild);
+        }
+        $("#adminView").load('@Url.Action("DeleteUser", "Admin")', { userId: userId });
+    }
+
+    function updateAmountPerPage() {
+        var amountPerPage;
+        if ($("#userAmountPerPage").val() !== '') {
+            amountPerPage = $("#userAmountPerPage").val();
+            var toMove = 1 - @currentPage;
+            updateUsers(toMove,amountPerPage);
+        } else {
+            return;
+        }
+
+
+    }
+
+    function gotoPage(pageIndex) {
+        var currentPage = @currentPage;
+        var toMove = parseInt(pageIndex) - currentPage;
+        updateUsers(toMove);
+    }
+
+    function updateUsers(pageMove, amountPerPage) {
+            amountPerPage = amountPerPage || @usersPerPage;
+            pageMove = pageMove || 0;
+            var currentPage = @currentPage;
+            var usersPerPage = @usersPerPage;
+
+            currentPage += pageMove;
+            var adminView = document.getElementById("adminView");
+            while (adminView.firstChild) {
+                adminView.removeChild(adminView.firstChild);
+            }
+            $("#adminView").load('@Url.Action("UpdateAdminView", "Admin")', { selectedPage: "AdminUsers", currentPage: currentPage, usersPerPage: amountPerPage });
+        };
+</script>

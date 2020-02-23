@@ -1,0 +1,34 @@
+﻿
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+    <div class="userDeleteConfirm">
+        <h2>Are you sure you want to delete user:</h2>
+        <h3 id="userIdText">@ViewData["userIdToDelete"]</h3>
+        <h3>@ViewData["userNameToDelete"]</h3>
+        <div class="userDeleteConfirmBtns">
+            <input id="cancelBtn" type="button" value="Cancel"/>
+            <input id="confirmBtn" type="button" value="Confirm"/>
+        </div>
+        
+    </div>
+
+<script>
+    var adminView = document.getElementById("adminView");
+    $("#cancelBtn").click(function () {
+            while (adminView.firstChild) {
+                adminView.removeChild(adminView.firstChild);
+            }
+            $("#adminView").load('@Url.Action("UpdateAdminView", "Admin")', { selectedPage: "AdminUsers", currentPage: 1, usersPerPage: 10 });
+    });
+
+    $("#confirmBtn").click(function () {
+        var userId = $("#userIdText").text();
+            while (adminView.firstChild) {
+                adminView.removeChild(adminView.firstChild);
+            }
+        $("#adminView").load('@Url.Action("DeleteUser", "Admin")', { userId: userId });
+        
+    });
+</script>

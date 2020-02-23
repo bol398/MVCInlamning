@@ -1,0 +1,46 @@
+﻿
+@{
+    ViewData["Title"] = "Admin Panel";
+    var selectedAdminPage = "AdminUsers";
+}
+<h1 class="text-center">Admin Panel</h1>
+<div class="col-12 adminPanelMain">
+    <div class="col-3" id="adminButtonsContainer">
+
+    </div>
+    <div class="col-1"></div>
+    <div class="col-8" id="adminView">
+        
+    </div>
+</div>
+
+<script>
+
+    @{ var adminPages = ViewData["adminPages"] as Dictionary<string, string>;}
+
+    var collection = @Html.Raw(Json.Serialize(adminPages));
+
+   
+        
+    
+        Object.keys(collection).forEach(function(k){
+
+            var btn = document.createElement("button");
+            var btnContainer = document.getElementById("adminButtonsContainer");
+            btn.classList.add("adminButton");
+            btn.classList.add("btn-primary");
+
+            btn.innerText = k
+            btn.addEventListener("click", function () {
+                var adminView = document.getElementById("adminView");
+                while (adminView.firstChild) {
+                    adminView.removeChild(adminView.firstChild);
+                }
+
+                $("#adminView").load('@Url.Action("UpdateAdminView", "Admin")', { selectedPage: collection[k] });
+
+            });
+
+            btnContainer.append(btn);
+        });
+</script>
